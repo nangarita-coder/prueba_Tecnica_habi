@@ -1,0 +1,82 @@
+Los bebedores que no les gusta la colombiana.
+
+SELECT *
+FROM tabla-BEBEDOR b
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM tabla-GUSTA g
+  JOIN tabla-BEBIDA be ON g.codigo-bebida = be.codigo-bebida
+  WHERE g.cedula = b.cedula AND be.nombre-bebida = 'colombiana'
+);
+
+Las fuentes de soda que no son frecuentadas por Andres Camilo Restrepo.
+
+SELECT *
+FROM tabla-TIENDA t
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM tabla-FRECUENTA f
+  JOIN tabla-BEBEDOR b ON f.cedula = b.cedula
+  WHERE f.codigo-tienda = t.codigo-tienda AND b.nombre = 'Andres Camilo Restrepo'
+);
+
+Los bebedores que les gusta al menos una bebida y que frecuentan al menos una tienda.
+
+SELECT *
+FROM tabla-BEBEDOR b
+WHERE EXISTS (
+  SELECT 1
+  FROM tabla-GUSTA g
+  WHERE g.cedula = b.cedula
+) AND EXISTS (
+  SELECT 1
+  FROM tabla-FRECUENTA f
+  WHERE f.cedula = b.cedula
+);
+
+Para cada bebedor, las bebidas que no le gustan.
+
+SELECT b.nombre, be.nombre-bebida
+FROM tabla-BEBEDOR b
+JOIN tabla-BEBIDA be ON TRUE
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM tabla-GUSTA g
+  WHERE g.cedula = b.cedula AND g.codigo-bebida = be.codigo-bebida
+);
+
+Los bebedores que frecuentan solo las tiendas que frecuenta Luis Perez.
+
+SELECT *
+FROM tabla-BEBEDOR b
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM tabla-FRECUENTA f
+  JOIN tabla-BEBEDOR l ON f.cedula = l.cedula
+  WHERE f.cedula = b.cedula AND f.codigo-tienda <> ALL (
+    SELECT codigo-tienda
+    FROM tabla-FRECUENTA f2
+    WHERE f2.cedula = l.cedula
+  )
+);
+
+Los bebedores que unicamente frecuentan las tiendas que unicamente sirven alguna bebida que le gusta.
+
+SELECT b.*
+FROM tabla-BEBEDOR b
+JOIN tabla-FRECUENTA f ON b.cedula = f.cedula
+JOIN tabla-VENDE v ON f.codigo-tienda = v.codigo-tienda
+JOIN tabla-GUSTA g ON b.cedula = g.cedula AND v.codigo-bebida = g.codigo-bebida
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM tabla-FRECUENTA f2
+  WHERE f2.cedula = b.cedula AND f2.codigo-tienda <> f.codigo-tienda AND NOT EXISTS (
+    SELECT 1
+    FROM tabla-VENDE v2
+    WHERE v2.codigo-tienda = f2.codigo-tienda AND NOT EXISTS (
+      SELECT 1
+      FROM tabla-GUSTA g2
+      WHERE g2.cedula = b.cedula AND v2.codigo-bebida = g2.codigo-bebida
+    )
+  )
+);
